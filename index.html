@@ -1,22 +1,86 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ShopForge - AI Retail Intelligence & Instant Storefront</title>
-    <meta name="description" content="ShopForge - Multi-Category AI Retail Intelligence & Instant WhatsApp Commerce Storefront. Automatically analyzes product imagery, removes backgrounds, extracts OCR packaging labels, suggests category taxonomy and pricing, and powers live merchant storefronts." />
-    <meta property="og:title" content="ShopForge - AI Retail Intelligence & Instant Storefront" />
-    <meta property="og:description" content="ShopForge - Multi-Category AI Retail Intelligence & Instant WhatsApp Commerce Storefront. Works for beverages, food, electronics, fashion, beauty, footwear, and general goods." />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@100..900&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
-    <script type="module" crossorigin src="/assets/index-Ccr3FPhZ.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-BxFkETWt.css">
+    <title>ShopForge</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --panel: #111827;
+        --panel-border: #334155;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --success: #4ade80;
+        --link: #7dd3fc;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Arial, sans-serif;
+      }
+
+      .card {
+        width: min(700px, calc(100vw - 32px));
+        background: var(--panel);
+        border: 1px solid var(--panel-border);
+        border-radius: 16px;
+        padding: 32px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      }
+
+      h1 {
+        margin: 0 0 16px;
+        font-size: clamp(2rem, 4vw, 3rem);
+      }
+
+      .status {
+        color: var(--success);
+        font-weight: bold;
+        margin-bottom: 12px;
+      }
+
+      p,
+      li {
+        color: var(--text);
+        line-height: 1.6;
+      }
+
+      ul {
+        margin-top: 12px;
+        padding-left: 20px;
+      }
+
+      a {
+        color: var(--link);
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
   </head>
-  <body class="bg-[#121414] text-[#e3e2e2] antialiased selection:bg-[#b1f735] selection:text-[#121f00]">
-    <div id="root"></div>
+  <body>
+    <div class="card">
+      <h1>ShopForge</h1>
+      <div class="status">Backend is running successfully.</div>
+      <p>AI-powered product intelligence and storefront automation for e-commerce.</p>
+      <p>Use the links below to access the app:</p>
+      <ul>
+        <li><a href="/docs">API Docs</a></li>
+        <li><a href="/health">Health Check</a></li>
+      </ul>
+    </div>
   </body>
 </html>
