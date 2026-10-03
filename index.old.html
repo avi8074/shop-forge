@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Intelligence AI - Interactive Demo</title>
+    <meta name="description" content="AI-powered product recognition, category classification, tag generation, description writing, and OCR text extraction.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0b0f19;
+            --card-bg: rgba(22, 30, 49, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+            --accent-glow: rgba(99, 102, 241, 0.35);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --badge-bg: rgba(99, 102, 241, 0.15);
+            --badge-border: rgba(99, 102, 241, 0.3);
+            --tag-bg: rgba(255, 255, 255, 0.06);
+            --success: #34d399;
+            --warning: #fbbf24;
+            --error: #f87171;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(217, 70, 239, 0.1) 0%, transparent 40%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* ── Header ── */
+        .header {
+            text-align: center;
+            max-width: 650px;
+            margin-bottom: 2.5rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+        }
+
+        /* ── Connection bar ── */
+        .connection-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+            padding: 0.5rem 1.2rem;
+            border-radius: 30px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            transition: all 0.4s ease;
+            max-width: 720px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .connection-bar.checking {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.25);
+            color: var(--warning);
+        }
+        .connection-bar.online {
+            background: rgba(52, 211, 153, 0.1);
+            border: 1px solid rgba(52, 211, 153, 0.25);
+            color: var(--success);
+        }
+        .connection-bar.offline {
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(248, 113, 113, 0.25);
+            color: var(--error);
+        }
+        .connection-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .checking .connection-dot { background: var(--warning); animation: pulse-dot 1s infinite; }
+        .online   .connection-dot { background: var(--success); }
+        .offline  .connection-dot { background: var(--error); }
+
+        .api-key-btn {
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            color: #c7d2fe;
+            padding: 0.35rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .api-key-btn:hover {
+            background: rgba(99, 102, 241, 0.35);
+            color: white;
+            border-color: #a78bfa;
+            transform: scale(1.02);
+        }
+
+        .engine-indicator {
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 0.25rem 0.65rem;
+            border-radius: 6px;
+            display: inline-block;
+            margin-top: 0.3rem;
+            letter-spacing: 0.2px;
+        }
+
+        .engine-indicator.local {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #c7d2fe;
+        }
+
+        .engine-indicator.gemini {
+            background: rgba(52, 211, 153, 0.15);
+            border: 1px solid rgba(52, 211, 153, 0.35);
+            color: #6ee7b7;
+        }
+
+        /* ── Modal Dialog ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal-content {
+            background: #111827;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 18px;
+            max-width: 480px;
+            width: 90%;
+            padding: 1.6rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .modal-header h3 {
+            font-size: 1.15rem;
+            color: var(--text-main);
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+        }
+
+        .modal-close:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50%      { opacity: 0.3; }
+        }
+
+        /* ── Grid Layout ── */
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 850px) {
+            .container { grid-template-columns: 1fr; }
+            .header h1 { font-size: 1.8rem; }
+        }
+
+        /* ── Card ── */
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        /* ── Dropzone ── */
+        .dropzone {
+            border: 2px dashed rgba(99, 102, 241, 0.35);
+            border-radius: 16px;
+            padding: 1.6rem 1.2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            background: rgba(15, 23, 42, 0.4);
+            position: relative;
+            display: block;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .dropzone:hover, .dropzone.dragover {
+            border-color: #8b5cf6;
+            background: rgba(99, 102, 241, 0.08);
+            box-shadow: 0 0 25px var(--accent-glow);
+            transform: translateY(-1px);
+        }
+
+        .dropzone.dragover {
+            border-color: #a78bfa;
+            background: rgba(139, 92, 246, 0.15);
+            transform: scale(1.01);
+        }
+
+        .dropzone-unselected {
+            pointer-events: none;
+        }
+
+        .dropzone-icon {
+            width: 52px;
+            height: 52px;
+            margin: 0 auto 0.75rem;
+            background: var(--badge-bg);
+            border: 1px solid var(--badge-border);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #8b5cf6;
+            transition: transform 0.2s ease, color 0.2s ease;
+        }
+
+        .dropzone:hover .dropzone-icon {
+            transform: scale(1.08);
+            color: #a78bfa;
+        }
+
+        .dropzone-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+            margin-bottom: 0.3rem;
+            color: var(--text-main);
+        }
+
+        .dropzone-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .paste-hint {
+            display: inline-block;
+            font-size: 0.75rem;
+            color: #818cf8;
+            background: rgba(99, 102, 241, 0.12);
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            border: 1px solid rgba(99, 102, 241, 0.25);
+        }
+
+        /* ── Selected State inside Dropzone ── */
+        .dropzone-selected {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.85rem;
+            cursor: default;
+        }
+
+        .preview-img-wrapper {
+            position: relative;
+            max-width: 100%;
+            display: inline-block;
+        }
+
+        .preview-img-wrapper img {
+            max-width: 100%;
+            max-height: 220px;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            object-fit: contain;
+            background: rgba(0, 0, 0, 0.2);
+            display: block;
+        }
+
+        .file-details {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--card-border);
+            padding: 0.6rem 0.85rem;
+            border-radius: 10px;
+            gap: 0.5rem;
+        }
+
+        .file-meta {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+            overflow: hidden;
+        }
+
+        .file-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 160px;
+        }
+
+        .file-info {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .preview-actions {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .btn-preview-action {
+            border: none;
+            padding: 0.35rem 0.65rem;
+            border-radius: 7px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .change-btn {
+            background: rgba(99, 102, 241, 0.2);
+            color: #c7d2fe;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .change-btn:hover {
+            background: rgba(99, 102, 241, 0.35);
+            color: white;
+        }
+
+        .remove-btn {
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .remove-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+            color: white;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 10px 25px var(--accent-glow); }
+            50% { box-shadow: 0 10px 30px rgba(217, 70, 239, 0.5); }
+        }
+
+        .btn.ready-pulse {
+            animation: pulseGlow 2.5s infinite;
+        }
+
+        /* ── Primary Button ── */
+        .btn {
+            width: 100%;
+            margin-top: 1.2rem;
+            padding: 1rem;
+            border: none;
+            border-radius: 14px;
+            background: var(--accent-gradient);
+            color: white;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 25px var(--accent-glow);
+            transition: transform 0.2s ease, opacity 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            opacity: 0.95;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ── Sample Buttons ── */
+        .sample-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .sample-btn {
+            background: var(--tag-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sample-btn:hover {
+            color: var(--text-main);
+            border-color: #8b5cf6;
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        /* ── Results Header ── */
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .results-header h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .status-pill {
+            background: var(--badge-bg);
+            border: 1px solid var(--badge-border);
+            color: #a78bfa;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        /* ── Fields ── */
+        .field-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .field-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.4rem;
+            font-weight: 700;
+        }
+
+        .product-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .category-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(217, 70, 239, 0.2));
+            border: 1px solid rgba(217, 70, 239, 0.3);
+            color: #f472b6;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .tag-item {
+            background: var(--tag-bg);
+            border: 1px solid var(--card-border);
+            color: #cbd5e1;
+            padding: 0.3rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            animation: fadeInTag 0.3s ease forwards;
+            opacity: 0;
+        }
+
+        @keyframes fadeInTag {
+            to { opacity: 1; }
+        }
+
+        .description-text {
+            line-height: 1.6;
+            color: #cbd5e1;
+            font-size: 0.95rem;
+            background: rgba(15, 23, 42, 0.4);
+            padding: 0.9rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .ocr-box {
+            font-family: monospace;
+            font-size: 0.85rem;
+            background: #090d16;
+            color: #38bdf8;
+            padding: 0.8rem;
+            border-radius: 10px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            word-break: break-word;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        /* ── Placeholder ── */
+        .placeholder-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+
+        /* ── Inline Error Banner ── */
+        .error-banner {
+            display: none;
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            border-radius: 12px;
+            padding: 0.9rem 1.2rem;
+            color: #fca5a5;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-top: 1rem;
+            animation: fadeSlideIn 0.3s ease;
+        }
+        .error-banner strong { color: var(--error); }
+
+        /* ── Skeleton Loader ── */
+        .skeleton-wrap {
+            display: none;
+        }
+        .skeleton-wrap.active {
+            display: block;
+        }
+        .skeleton-line {
+            background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.04) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+            margin-bottom: 0.8rem;
+        }
+        .skeleton-line.title   { height: 28px; width: 70%; }
+        .skeleton-line.badge   { height: 32px; width: 45%; border-radius: 20px; }
+        .skeleton-line.tags    { height: 24px; width: 90%; }
+        .skeleton-line.desc    { height: 60px; width: 100%; }
+        .skeleton-line.ocr     { height: 40px; width: 80%; }
+
+        .skeleton-label {
+            height: 12px; width: 35%; margin-bottom: 0.4rem;
+            background: rgba(255,255,255,0.04);
+            border-radius: 4px;
+        }
+        .skeleton-group { margin-bottom: 1.25rem; }
+
+        @keyframes shimmer {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* ── Spinner ── */
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ── Animations ── */
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeSlideIn 0.4s ease;
+        }
+
+        /* ── Elapsed timer ── */
+        .elapsed-timer {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            text-align: center;
+            display: none;
+        }
+
+        /* ── Media Pipeline Integration Styles ── */
+        .media-toggle-card {
+            background: rgba(139, 92, 246, 0.08);
+            border: 1px solid rgba(139, 92, 246, 0.25);
+            border-radius: 12px;
+            padding: 0.85rem 1rem;
+            margin-top: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+        .media-status-pill {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-muted);
+        }
+        .media-status-pill.online {
+            background: rgba(52, 211, 153, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(52, 211, 153, 0.3);
+        }
+        .media-status-pill.offline {
+            background: rgba(248, 113, 113, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(248, 113, 113, 0.3);
+        }
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-top: 0.6rem;
+        }
+        .media-variant-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .media-variant-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(139, 92, 246, 0.4);
+        }
+        .media-variant-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.4rem 0.6rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #cbd5e1;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid var(--card-border);
+        }
+        .media-link {
+            color: #a78bfa;
+            text-decoration: none;
+            font-size: 0.72rem;
+        }
+        .media-link:hover {
+            text-decoration: underline;
+        }
+        .media-img-container {
+            width: 100%;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            position: relative;
+            overflow: hidden;
+        }
+        .media-img-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .media-img-container.checkerboard {
+            background-color: #1e293b;
+            background-image: 
+                linear-gradient(45deg, #0f172a 25%, transparent 25%), 
+                linear-gradient(-45deg, #0f172a 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #0f172a 75%), 
+                linear-gradient(-45deg, transparent 75%, #0f172a 75%);
+            background-size: 16px 16px;
+            background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+        }
+        .color-chip {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            display: inline-block;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+        .bg-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 6px;
+            background: rgba(52, 211, 153, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(52, 211, 153, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Product Intelligence AI</h1>
+        <p>Upload any product image to test real-time product recognition, brand detection, category classification, tagging, and OCR extraction.</p>
+    </div>
+
+    <!-- Connection & Engine Bar -->
+    <div class="connection-bar checking" id="connectionBar">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="connection-dot"></span>
+            <span id="connectionText">Checking backend...</span>
+        </div>
+        <button type="button" class="api-key-btn" onclick="openKeyModal()">
+            🔑 Configure Gemini AI (Free)
+        </button>
+    </div>
+
+    <div class="container">
+        <!-- Input Column -->
+        <div class="card">
+            <h2 style="font-size: 1.3rem; margin-bottom: 1.2rem;">Upload Product Image</h2>
+
+            <label for="fileInput" class="dropzone" id="dropzone">
+                <input type="file" id="fileInput" accept="image/*,.png,.jpg,.jpeg,.webp,.bmp,.gif,.jfif,.avif" style="display: none;">
+                <div class="dropzone-unselected" id="dropzoneUnselected">
+                    <div class="dropzone-icon">
+                        <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <p class="dropzone-title">Click to upload or drag &amp; drop</p>
+                    <p class="dropzone-subtitle">PNG, JPG, WEBP, or BMP (up to 25MB)</p>
+                    <span class="paste-hint">📋 or paste image with Ctrl+V</span>
+                </div>
+
+                <div class="dropzone-selected" id="dropzoneSelected">
+                    <div class="preview-img-wrapper">
+                        <img id="imagePreview" src="" alt="Selected Product Preview">
+                    </div>
+                    <div class="file-details">
+                        <div class="file-meta">
+                            <span class="file-name" id="fileName">image.png</span>
+                            <span class="file-info" id="fileInfo">0 KB</span>
+                        </div>
+                        <div class="preview-actions">
+                            <button type="button" class="btn-preview-action change-btn" id="changeImgBtn" onclick="event.preventDefault(); event.stopPropagation(); document.getElementById('fileInput').click();">
+                                🔄 Replace
+                            </button>
+                            <button type="button" class="btn-preview-action remove-btn" id="removeImgBtn" onclick="event.preventDefault(); event.stopPropagation(); clearSelectedImage();">
+                                ✕ Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </label>
+
+            <div style="margin-top: 1rem;">
+                <p style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">TRY SAMPLE IMAGES:</p>
+                <div class="sample-buttons">
+                    <button class="sample-btn" onclick="loadSampleImage('beverage_can.jpg')">🥤 Beverage Can</button>
+                    <button class="sample-btn" onclick="loadSampleImage('sneakers.png')">👟 Sneakers</button>
+                    <button class="sample-btn" onclick="loadSampleImage('skincare_cream.png')">🧴 Skincare Cream</button>
+                    <button class="sample-btn" onclick="loadSampleImage('book_cover.jpg')">📚 Book Cover</button>
+                </div>
+            </div>
+
+            <!-- Cloudinary Media Pipeline Toggle -->
+            <div class="media-toggle-card">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; font-weight: 700; color: #f1f5f9;">
+                        <input type="checkbox" id="mediaPipelineToggle" checked style="accent-color: #8b5cf6; width: 16px; height: 16px;">
+                        <span>☁️ Cloudinary Media Pipeline</span>
+                    </label>
+                    <span class="media-status-pill checking" id="mediaStatusPill">Checking...</span>
+                </div>
+                <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.6rem; font-size: 0.78rem; color: var(--text-muted);">
+                    <span>Shop ID:</span>
+                    <input type="text" id="shopIdInput" value="default-shop" style="background: rgba(15,23,42,0.6); border: 1px solid var(--card-border); color: white; border-radius: 4px; padding: 2px 6px; font-size: 0.78rem; width: 100px;">
+                    <label style="display: flex; align-items: center; gap: 4px; margin-left: auto; cursor: pointer;">
+                        <input type="checkbox" id="removeBgToggle" checked style="accent-color: #8b5cf6;"> AI BG Removal
+                    </label>
+                </div>
+            </div>
+
+            <button class="btn" id="analyzeBtn" onclick="analyzeProduct()" disabled>
+                <span class="spinner" id="spinner"></span>
+                <span id="btnText">Analyze Product with AI</span>
+            </button>
+
+            <div class="elapsed-timer" id="elapsedTimer"></div>
+
+            <!-- Inline error banner (replaces alert()) -->
+            <div class="error-banner" id="errorBanner"></div>
+        </div>
+
+        <!-- Output Results Column -->
+        <div class="card">
+            <div class="results-header">
+                <div>
+                    <h2>AI Intelligence Results</h2>
+                    <div class="engine-indicator local" id="engineIndicator">⚡ Local Computer Vision Engine</div>
+                </div>
+                <span class="status-pill" id="statusPill">Ready</span>
+            </div>
+
+            <!-- Skeleton loading state -->
+            <div class="skeleton-wrap" id="skeletonLoader">
+                <div class="skeleton-group"><div class="skeleton-label"></div><div class="skeleton-line title"></div></div>
+                <div class="skeleton-group"><div class="skeleton-label"></div><div class="skeleton-line badge"></div></div>
+                <div class="skeleton-group"><div class="skeleton-label"></div><div class="skeleton-line tags"></div></div>
+                <div class="skeleton-group"><div class="skeleton-label"></div><div class="skeleton-line desc"></div></div>
+                <div class="skeleton-group"><div class="skeleton-label"></div><div class="skeleton-line ocr"></div></div>
+            </div>
+
+            <div id="resultsContent" style="display: none;">
+                <div class="field-group">
+                    <div class="field-label">Suggested Product Name</div>
+                    <div class="product-title" id="resName">--</div>
+                </div>
+
+                <div class="field-group">
+                    <div class="field-label">Suggested Category</div>
+                    <span class="category-badge" id="resCategory">--</span>
+                </div>
+
+                <div class="field-group">
+                    <div class="field-label">Relevant Tags</div>
+                    <div class="tags-container" id="resTags">--</div>
+                </div>
+
+                <div class="field-group">
+                    <div class="field-label">Product Description</div>
+                    <div class="description-text" id="resDescription">--</div>
+                </div>
+
+                <div class="field-group">
+                    <div class="field-label">Extracted OCR Text</div>
+                    <div class="ocr-box" id="resOcr">None detected</div>
+                </div>
+
+                <!-- Cloudinary Processed Media Results -->
+                <div class="field-group" id="mediaResultsGroup" style="display: none; margin-top: 1.5rem; border-top: 1px solid var(--card-border); padding-top: 1.2rem;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem;">
+                        <div class="field-label" style="margin: 0; font-size: 0.88rem; color: #cbd5e1;">Cloudinary Processed Media Assets</div>
+                        <span id="bgRemovedBadge" class="bg-badge">AI Cutout Ready</span>
+                    </div>
+                    
+                    <div class="media-grid">
+                        <div class="media-variant-card">
+                            <div class="media-variant-header">
+                                <span>1000×1000 Main</span>
+                                <a id="mainUrlLink" href="#" target="_blank" class="media-link">Open ↗</a>
+                            </div>
+                            <div class="media-img-container">
+                                <img id="resImgMain" src="" alt="Main Image">
+                            </div>
+                        </div>
+
+                        <div class="media-variant-card">
+                            <div class="media-variant-header">
+                                <span>600×600 Card</span>
+                                <a id="cardUrlLink" href="#" target="_blank" class="media-link">Open ↗</a>
+                            </div>
+                            <div class="media-img-container">
+                                <img id="resImgCard" src="" alt="Card Image">
+                            </div>
+                        </div>
+
+                        <div class="media-variant-card">
+                            <div class="media-variant-header">
+                                <span>300×300 Smart Crop</span>
+                                <a id="thumbUrlLink" href="#" target="_blank" class="media-link">Open ↗</a>
+                            </div>
+                            <div class="media-img-container">
+                                <img id="resImgThumb" src="" alt="Thumbnail">
+                            </div>
+                        </div>
+
+                        <div class="media-variant-card">
+                            <div class="media-variant-header">
+                                <span>Transparent Cutout</span>
+                                <a id="transUrlLink" href="#" target="_blank" class="media-link">Open ↗</a>
+                            </div>
+                            <div class="media-img-container checkerboard">
+                                <img id="resImgTrans" src="" alt="Cutout">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dominant Colors & Public ID -->
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; margin-top: 0.9rem; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-size: 0.74rem; color: var(--text-muted); font-weight: 700;">COLORS:</span>
+                            <div id="resColors" style="display: flex; gap: 0.35rem;"></div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.74rem; color: var(--text-muted);">
+                            <span>Public ID:</span>
+                            <code id="resPublicId" style="background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; color: #a5b4fc; font-family: monospace;">--</code>
+                        </div>
+                    </div>
+
+                    <div id="mediaWarnings" style="display: none; margin-top: 0.8rem; background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.25); border-radius: 8px; padding: 0.6rem; font-size: 0.78rem; color: var(--warning);"></div>
+                </div>
+            </div>
+
+            <div class="placeholder-state" id="placeholderState">
+                <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-bottom: 1rem; color: rgba(255,255,255,0.2);">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                <p>Upload a product image and click <strong>Analyze Product with AI</strong> to test real-time product intelligence.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Key Configuration Modal -->
+    <div class="modal-overlay" id="keyModal" style="display: none;" onclick="if(event.target === this) closeKeyModal();">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>⚡ Configure Vision AI Provider</h3>
+                <button type="button" class="modal-close" onclick="closeKeyModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.5;">
+                    To unlock <strong>Google Multimodal Vision AI</strong> (which reads fine packaging labels, recognizes exact brand models, and generates custom copy), connect a <strong>Google Gemini API key</strong>.
+                </p>
+                <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 10px; padding: 0.8rem; margin-bottom: 1.2rem; font-size: 0.82rem; color: #c7d2fe;">
+                    💡 <strong>Free &amp; Instant:</strong> Get a free personal API key in under 10 seconds from
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: #a78bfa; text-decoration: underline; font-weight: 600;">Google AI Studio ↗</a>
+                </div>
+                <label style="font-size: 0.82rem; font-weight: 600; display: block; margin-bottom: 0.4rem;">Google Gemini API Key</label>
+                <input type="password" id="geminiKeyInput" placeholder="AIzaSy..." style="width: 100%; padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid var(--card-border); background: rgba(15, 23, 42, 0.6); color: white; font-family: monospace; font-size: 0.9rem; margin-bottom: 1rem; box-sizing: border-box;">
+                <div id="keyModalStatus" style="display: none; padding: 0.6rem; border-radius: 8px; font-size: 0.82rem; margin-bottom: 1rem;"></div>
+                <div style="display: flex; gap: 0.6rem; justify-content: flex-end;">
+                    <button type="button" class="sample-btn" onclick="closeKeyModal()">Cancel</button>
+                    <button type="button" class="btn" id="saveKeyBtn" style="width: auto; padding: 0.6rem 1.4rem; margin: 0; font-size: 0.9rem;" onclick="saveApiKey()">Save &amp; Activate Gemini</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ─── Backend URL auto-detection ───
+        // When served by FastAPI (/demo or /ui) the origin is correct.
+        // When opened as file:// fall back to localhost:8000.
+        const BASE_URL = (function() {
+            if (location.protocol === "file:") return "http://localhost:8000";
+            return location.origin;  // e.g. http://localhost:8000
+        })();
+
+        const API_URL = BASE_URL + "/analyze-product";
+        const SAMPLE_URL = BASE_URL + "/sample_images";
+        const HEALTH_URL = BASE_URL + "/health";
+        const CONFIG_KEY_URL = BASE_URL + "/config/api-key";
+
+        let selectedFile = null;
+        let elapsedInterval = null;
+
+        // ─── DOM refs ───
+        const fileInput         = document.getElementById("fileInput");
+        const dropzone          = document.getElementById("dropzone");
+        const dropzoneUnselected = document.getElementById("dropzoneUnselected");
+        const dropzoneSelected  = document.getElementById("dropzoneSelected");
+        const fileName          = document.getElementById("fileName");
+        const fileInfo          = document.getElementById("fileInfo");
+        const imagePreview      = document.getElementById("imagePreview");
+        const analyzeBtn        = document.getElementById("analyzeBtn");
+        const spinner           = document.getElementById("spinner");
+        const btnText           = document.getElementById("btnText");
+        const statusPill        = document.getElementById("statusPill");
+        const errorBanner       = document.getElementById("errorBanner");
+        const connBar           = document.getElementById("connectionBar");
+        const connText          = document.getElementById("connectionText");
+        const elapsedTimer      = document.getElementById("elapsedTimer");
+        const skeletonLoader    = document.getElementById("skeletonLoader");
+
+        // ─── API Key Modal Functions ───
+        function openKeyModal() {
+            document.getElementById("keyModal").style.display = "flex";
+            const input = document.getElementById("geminiKeyInput");
+            if (input) setTimeout(() => input.focus(), 100);
+        }
+
+        function closeKeyModal() {
+            document.getElementById("keyModal").style.display = "none";
+            const statusBox = document.getElementById("keyModalStatus");
+            if (statusBox) statusBox.style.display = "none";
+        }
+
+        async function saveApiKey() {
+            const key = document.getElementById("geminiKeyInput").value.trim();
+            const statusBox = document.getElementById("keyModalStatus");
+            const saveBtn = document.getElementById("saveKeyBtn");
+
+            if (!key) {
+                statusBox.style.display = "block";
+                statusBox.style.background = "rgba(239, 68, 68, 0.15)";
+                statusBox.style.color = "#fca5a5";
+                statusBox.textContent = "Please paste a valid Gemini API key.";
+                return;
+            }
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = "Verifying with Google...";
+            statusBox.style.display = "block";
+            statusBox.style.background = "rgba(99, 102, 241, 0.15)";
+            statusBox.style.color = "#c7d2fe";
+            statusBox.textContent = "Validating key with Google Gemini 2.5 Flash Vision...";
+
+            try {
+                const res = await fetch(CONFIG_KEY_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ gemini_api_key: key })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.detail || "Validation failed");
+                }
+
+                statusBox.style.background = "rgba(52, 211, 153, 0.15)";
+                statusBox.style.color = "#6ee7b7";
+                statusBox.textContent = "✓ Verified! " + data.message;
+
+                setTimeout(() => {
+                    closeKeyModal();
+                    checkBackendHealth();
+                }, 1200);
+            } catch (err) {
+                statusBox.style.background = "rgba(239, 68, 68, 0.15)";
+                statusBox.style.color = "#fca5a5";
+                statusBox.textContent = "⚠ " + err.message;
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = "Save & Activate Gemini";
+            }
+        }
+
+        // ─── Connection health check ───
+        async function checkBackendHealth() {
+            connBar.className = "connection-bar checking";
+            connText.textContent = "Checking backend...";
+            try {
+                const r = await fetch(HEALTH_URL, { signal: AbortSignal.timeout(5000) });
+                if (r.ok) {
+                    const data = await r.json();
+                    connBar.className = "connection-bar online";
+                    const isGemini = Boolean(data.ai_engine?.gemini_api_configured);
+                    const engineName = isGemini
+                        ? "Gemini 2.5 Flash Vision (Active)"
+                        : "Local Computer Vision Engine";
+                    connText.textContent = `Backend online · ${engineName}`;
+
+                    const engineIndicator = document.getElementById("engineIndicator");
+                    if (engineIndicator) {
+                        if (isGemini) {
+                            engineIndicator.textContent = "✨ Google Gemini 2.5 Flash Multimodal Vision";
+                            engineIndicator.className = "engine-indicator gemini";
+                        } else {
+                            engineIndicator.textContent = "⚡ Local Computer Vision & Geometry Engine";
+                            engineIndicator.className = "engine-indicator local";
+                        }
+                    }
+
+                    // Update Media Pipeline status pill
+                    const mpPill = document.getElementById("mediaStatusPill");
+                    if (mpPill && data.media_pipeline) {
+                        if (data.media_pipeline.service_online && data.media_pipeline.cloudinary_status === "ok") {
+                            mpPill.textContent = "● Live & Ready";
+                            mpPill.className = "media-status-pill online";
+                        } else if (data.media_pipeline.service_online) {
+                            mpPill.textContent = "● Service Active";
+                            mpPill.className = "media-status-pill online";
+                        } else {
+                            mpPill.textContent = "○ Offline (Port 5001)";
+                            mpPill.className = "media-status-pill offline";
+                        }
+                    }
+                } else {
+                    throw new Error("Non-OK");
+                }
+            } catch {
+                connBar.className = "connection-bar offline";
+                connText.textContent = "Backend offline — start server with: uvicorn main:app --port 8000";
+            }
+        }
+        checkBackendHealth();
+        // Re-check every 15 seconds
+        setInterval(checkBackendHealth, 15000);
+
+        // ─── Prevent browser from opening files dropped outside dropzone ───
+        window.addEventListener("dragover", (e) => e.preventDefault(), false);
+        window.addEventListener("drop", (e) => e.preventDefault(), false);
+
+        // ─── File input change handler ───
+        fileInput.addEventListener("click", (e) => { e.target.value = ""; });
+        fileInput.addEventListener("change", (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        // ─── Dropzone Drag & Drop ───
+        ['dragenter', 'dragover'].forEach(ev => {
+            dropzone.addEventListener(ev, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(ev => {
+            dropzone.addEventListener(ev, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.remove('dragover');
+            }, false);
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            if (dt && dt.files && dt.files.length > 0) {
+                handleFileSelect(dt.files[0]);
+            }
+        });
+
+        // ─── Clipboard Paste (Ctrl+V) Support ───
+        window.addEventListener("paste", (e) => {
+            const items = (e.clipboardData || window.clipboardData)?.items;
+            if (!items) return;
+            for (const item of items) {
+                if (item.type && item.type.indexOf("image") !== -1) {
+                    const blob = item.getAsFile();
+                    if (blob) {
+                        const pasteFile = new File([blob], `pasted_image_${Date.now()}.png`, { type: blob.type || "image/png" });
+                        handleFileSelect(pasteFile);
+                        break;
+                    }
+                }
+            }
+        });
+
+        function handleFileSelect(file) {
+            if (!file) return;
+
+            // Flexible validation for any image type or image file extension
+            const validExts = /\.(jpe?g|png|webp|bmp|gif|avif|jfif|tiff?)$/i;
+            const isImage = (file.type && file.type.startsWith("image/")) || validExts.test(file.name);
+            if (!isImage) {
+                showError("Please select a valid image file (PNG, JPG, WEBP, BMP, etc.).");
+                return;
+            }
+
+            // Max 25MB
+            if (file.size > 25 * 1024 * 1024) {
+                showError("Image is too large. Maximum size is 25 MB.");
+                return;
+            }
+
+            selectedFile = file;
+            hideError();
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+
+                // Format file metadata
+                if (fileName) fileName.textContent = file.name || "Selected Image";
+                const sizeFormatted = file.size > 1024 * 1024
+                    ? (file.size / (1024 * 1024)).toFixed(2) + " MB"
+                    : (file.size / 1024).toFixed(1) + " KB";
+
+                const tempImg = new Image();
+                tempImg.onload = () => {
+                    if (fileInfo) fileInfo.textContent = `${sizeFormatted} · ${tempImg.naturalWidth}×${tempImg.naturalHeight}px`;
+                };
+                tempImg.src = e.target.result;
+
+                // Toggle dropzone view
+                if (dropzoneUnselected) dropzoneUnselected.style.display = "none";
+                if (dropzoneSelected) dropzoneSelected.style.display = "flex";
+
+                analyzeBtn.disabled = false;
+                analyzeBtn.classList.add("ready-pulse");
+                setStatus("Image Ready — Click Analyze", "#34d399");
+            };
+            reader.onerror = () => {
+                showError("Failed to read image file. Please try selecting the file again.");
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearSelectedImage() {
+            selectedFile = null;
+            fileInput.value = "";
+            imagePreview.src = "";
+            if (dropzoneUnselected) dropzoneUnselected.style.display = "block";
+            if (dropzoneSelected) dropzoneSelected.style.display = "none";
+            analyzeBtn.disabled = true;
+            analyzeBtn.classList.remove("ready-pulse");
+            hideError();
+            stopTimer();
+
+            document.getElementById("placeholderState").style.display = "block";
+            document.getElementById("resultsContent").style.display = "none";
+            const mediaGroup = document.getElementById("mediaResultsGroup");
+            if (mediaGroup) mediaGroup.style.display = "none";
+            skeletonLoader.classList.remove("active");
+            setStatus("Ready", "#a78bfa");
+        }
+
+        // ─── Sample images ───
+        async function loadSampleImage(filename) {
+            hideError();
+            try {
+                const response = await fetch(`${SAMPLE_URL}/${filename}?t=${Date.now()}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status} — make sure the FastAPI server is running.`);
+                const blob = await response.blob();
+                const file = new File([blob], filename, { type: blob.type || "image/jpeg" });
+                handleFileSelect(file);
+            } catch (err) {
+                showError("Could not load sample image: " + err.message);
+            }
+        }
+
+        // ─── Analysis with Dual Multipart & Base64 Fallback ───
+        async function analyzeProduct() {
+            if (!selectedFile) {
+                showError("Please upload or select an image first.");
+                return;
+            }
+
+            const useMediaPipeline = document.getElementById("mediaPipelineToggle")?.checked;
+            const shopId = document.getElementById("shopIdInput")?.value?.trim() || "default-shop";
+            const removeBg = document.getElementById("removeBgToggle")?.checked;
+
+            // UI → loading state
+            analyzeBtn.disabled = true;
+            analyzeBtn.classList.remove("ready-pulse");
+            spinner.style.display = "inline-block";
+            btnText.innerText = useMediaPipeline ? "Analyzing & Processing Media..." : "Analyzing Image...";
+            setStatus(useMediaPipeline ? "AI + Cloudinary Processing..." : "Processing AI...", "#fbbf24");
+            hideError();
+
+            document.getElementById("placeholderState").style.display = "none";
+            document.getElementById("resultsContent").style.display = "none";
+            const mediaGroup = document.getElementById("mediaResultsGroup");
+            if (mediaGroup) mediaGroup.style.display = "none";
+            skeletonLoader.classList.add("active");
+
+            startTimer();
+
+            const targetEndpoint = useMediaPipeline
+                ? (BASE_URL + "/analyze-and-process-product")
+                : API_URL;
+
+            try {
+                let res = null;
+
+                // Attempt 1: Multipart Form Data
+                try {
+                    const formData = new FormData();
+                    formData.append("image", selectedFile);
+                    if (useMediaPipeline) {
+                        formData.append("shopId", shopId);
+                        formData.append("removeBackground", removeBg ? "true" : "false");
+                    }
+                    res = await fetch(targetEndpoint, {
+                        method: "POST",
+                        body: formData
+                    });
+                } catch (netErr) {
+                    console.warn("Multipart upload encounter: ", netErr);
+                }
+
+                // Attempt 2: Fallback to JSON Base64 if multipart failed or had error (for standard analysis)
+                if ((!res || !res.ok) && !useMediaPipeline) {
+                    const b64Data = imagePreview.src;
+                    if (b64Data && b64Data.startsWith("data:image")) {
+                        res = await fetch(API_URL, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ image_base64: b64Data })
+                        });
+                    }
+                }
+
+                if (!res || !res.ok) {
+                    let errDetail = `Server error (${res ? res.status : 'Cannot reach backend'})`;
+                    if (res) {
+                        const errData = await res.json().catch(() => null);
+                        if (errData && errData.detail) errDetail = errData.detail;
+                    } else {
+                        errDetail = "Could not connect to backend server. Make sure FastAPI is running on port 8000.";
+                    }
+                    throw new Error(errDetail);
+                }
+
+                const engineHeader = res.headers.get("x-ai-engine") || "";
+                const data = await res.json();
+                if (engineHeader) data.engine_used = engineHeader;
+                renderResults(data);
+                setStatus("Analysis Complete ✓", "#34d399");
+            } catch (err) {
+                skeletonLoader.classList.remove("active");
+                document.getElementById("placeholderState").style.display = "block";
+                showError(err.message);
+                setStatus("Error", "#f87171");
+            } finally {
+                analyzeBtn.disabled = false;
+                spinner.style.display = "none";
+                btnText.innerText = "Analyze Product with AI";
+                stopTimer();
+            }
+        }
+
+
+        // ─── Render results ───
+        function renderResults(data) {
+            skeletonLoader.classList.remove("active");
+
+            const resultsEl = document.getElementById("resultsContent");
+            resultsEl.style.display = "block";
+            resultsEl.classList.add("fade-in");
+
+            // Update engine indicator badge
+            const engineIndicator = document.getElementById("engineIndicator");
+            if (engineIndicator) {
+                if (data.engine_used === "gemini_vision") {
+                    engineIndicator.textContent = "✨ Google Gemini 2.5 Flash Multimodal Vision";
+                    engineIndicator.className = "engine-indicator gemini";
+                } else if (data.engine_used === "openrouter_vision") {
+                    engineIndicator.textContent = "✨ OpenRouter Vision VLM";
+                    engineIndicator.className = "engine-indicator gemini";
+                } else {
+                    engineIndicator.textContent = "⚡ Local Computer Vision & Geometry Engine";
+                    engineIndicator.className = "engine-indicator local";
+                }
+            }
+
+            document.getElementById("resName").innerText = data.product_name || "N/A";
+            document.getElementById("resCategory").innerText = data.category || "Uncategorized";
+
+            const tagsContainer = document.getElementById("resTags");
+            tagsContainer.innerHTML = "";
+            (data.tags || []).forEach((tag, i) => {
+                const span = document.createElement("span");
+                span.className = "tag-item";
+                span.style.animationDelay = `${i * 0.08}s`;
+                span.innerText = "#" + tag;
+                tagsContainer.appendChild(span);
+            });
+
+            document.getElementById("resDescription").innerText = data.description || "No description generated.";
+
+            const ocrBox = document.getElementById("resOcr");
+            if (data.ocr_text && data.ocr_text.trim()) {
+                ocrBox.innerText = data.ocr_text;
+                ocrBox.style.color = "#38bdf8";
+            } else {
+                ocrBox.innerText = "No readable label text detected";
+                ocrBox.style.color = "#64748b";
+            }
+
+            // ─── Render Cloudinary Media Assets if present ───
+            const mediaGroup = document.getElementById("mediaResultsGroup");
+            if (mediaGroup) {
+                const media = data.media;
+                if (media && (media.imageUrl || media.publicId)) {
+                    mediaGroup.style.display = "block";
+
+                    const mainImg = document.getElementById("resImgMain");
+                    const mainLink = document.getElementById("mainUrlLink");
+                    if (mainImg) mainImg.src = media.imageUrl || "";
+                    if (mainLink) mainLink.href = media.imageUrl || "#";
+
+                    const cardImg = document.getElementById("resImgCard");
+                    const cardLink = document.getElementById("cardUrlLink");
+                    if (cardImg) cardImg.src = media.cardUrl || media.imageUrl || "";
+                    if (cardLink) cardLink.href = media.cardUrl || media.imageUrl || "#";
+
+                    const thumbImg = document.getElementById("resImgThumb");
+                    const thumbLink = document.getElementById("thumbUrlLink");
+                    if (thumbImg) thumbImg.src = media.thumbnailUrl || media.imageUrl || "";
+                    if (thumbLink) thumbLink.href = media.thumbnailUrl || media.imageUrl || "#";
+
+                    const transImg = document.getElementById("resImgTrans");
+                    const transLink = document.getElementById("transUrlLink");
+                    if (transImg) transImg.src = media.transparentUrl || media.imageUrl || "";
+                    if (transLink) transLink.href = media.transparentUrl || media.imageUrl || "#";
+
+                    const badge = document.getElementById("bgRemovedBadge");
+                    if (badge) {
+                        badge.textContent = media.backgroundRemoved ? "✓ Background Removed" : "Standard Resize (No Cutout)";
+                        badge.className = media.backgroundRemoved ? "bg-badge" : "bg-badge offline";
+                    }
+
+                    const pubIdEl = document.getElementById("resPublicId");
+                    if (pubIdEl) pubIdEl.textContent = media.publicId || "--";
+
+                    const colorsEl = document.getElementById("resColors");
+                    if (colorsEl) {
+                        colorsEl.innerHTML = "";
+                        (media.dominantColors || []).forEach(color => {
+                            const chip = document.createElement("span");
+                            chip.className = "color-chip";
+                            chip.style.backgroundColor = color;
+                            chip.title = color;
+                            colorsEl.appendChild(chip);
+                        });
+                    }
+
+                    const warnEl = document.getElementById("mediaWarnings");
+                    if (warnEl) {
+                        if (media.warnings && media.warnings.length) {
+                            warnEl.style.display = "block";
+                            warnEl.innerHTML = `<strong>Notice:</strong> ${media.warnings.join("<br>")}`;
+                        } else {
+                            warnEl.style.display = "none";
+                        }
+                    }
+                } else if (media && media.error) {
+                    mediaGroup.style.display = "block";
+                    const warnEl = document.getElementById("mediaWarnings");
+                    if (warnEl) {
+                        warnEl.style.display = "block";
+                        warnEl.innerHTML = `<strong>Media Pipeline Status:</strong> ${media.error}`;
+                    }
+                } else {
+                    mediaGroup.style.display = "none";
+                }
+            }
+
+            // Remove animation class after it plays
+            setTimeout(() => resultsEl.classList.remove("fade-in"), 500);
+        }
+
+        // ─── Helpers ───
+        function setStatus(text, color) {
+            statusPill.innerText = text;
+            statusPill.style.color = color;
+        }
+
+        function showError(msg) {
+            errorBanner.innerHTML = `<strong>⚠ Error:</strong> ${msg}`;
+            errorBanner.style.display = "block";
+        }
+
+        function hideError() {
+            errorBanner.style.display = "none";
+        }
+
+        function startTimer() {
+            const start = Date.now();
+            elapsedTimer.style.display = "block";
+            elapsedTimer.textContent = "Elapsed: 0.0s";
+            elapsedInterval = setInterval(() => {
+                const secs = ((Date.now() - start) / 1000).toFixed(1);
+                elapsedTimer.textContent = `Elapsed: ${secs}s`;
+            }, 100);
+        }
+
+        function stopTimer() {
+            if (elapsedInterval) {
+                clearInterval(elapsedInterval);
+                elapsedInterval = null;
+            }
+            // Keep final time visible briefly, then hide
+            setTimeout(() => { elapsedTimer.style.display = "none"; }, 3000);
+        }
+    </script>
+</body>
+</html>
